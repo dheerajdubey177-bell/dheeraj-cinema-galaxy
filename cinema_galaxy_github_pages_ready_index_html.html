@@ -1,0 +1,71 @@
+<!-- ... existing code ... -->
+        <div>
+          <h1 class="text-base sm:text-xl font-extrabold tracking-wider casino-bullet-text">
+            DHEERAJ'S CINEMA GALAXY
+          </h1>
+          <p class="text-[11px] sm:text-xs text-slate-400">
+            Bollywood & Hollywood Globe • <span id="star-counter" class="text-amber-400 font-semibold">1,002</span> Stars{' '}
+            <span id="expansion-progress" class="text-amber-300/90 font-medium ml-1"></span>
+            <span class="text-emerald-400/90 font-medium ml-1">
+              • <span id="photo-counter">0</span> Photos
+            </span>
+          </p>
+        </div>
+      </div>
+<!-- ... existing code ... -->
+          const newlyAdded = [];
+          await Promise.all(
+            slice.map(async (c) => {
+              if (fullRoster.length + newlyAdded.length >= TARGET_TOTAL) return;
+              const page = pages.find(
+                (p) =>
+                  p.title &&
+                  (p.title.toLowerCase() === c.wiki.toLowerCase() ||
+                    p.title.toLowerCase().startsWith(c.name.toLowerCase()))
+              );
+              const thumbSrc = page?.thumbnail?.source;
+              if (!isValidPhotoUrl(thumbSrc)) return;
+
+              const imgEl = await preloadImageElement(thumbSrc);
+              if (!imgEl) return;
+
+              const extract = page?.extract || '';
+              const bornMatch = extract.match(/\bborn\s+([A-Z][a-z]+\s+\d{1,2},\s+\d{4}|\d{1,2}\s+[A-Z][a-z]+\s+\d{4})/);
+              const diedMatch = extract.match(/[–-]\s*([A-Z][a-z]+\s+\d{1,2},\s+\d{4}|\d{1,2}\s+[A-Z][a-z]+\s+\d{4})/);
+              const era = inferEraFromText(extract, fullRoster.length + newlyAdded.length);
+
+              newlyAdded.push({
+                name: c.name,
+                industry: c.industry,
+                era,
+                epithet: c.industry === 'Bollywood' ? 'Indian Cinema Luminary' : 'Hollywood Screen Icon',
+                born: bornMatch ? bornMatch[1] : 'Cinema Archive',
+                died: diedMatch ? diedMatch[1] : null,
+                awards: c.industry === 'Bollywood' ? 'Indian Cinema Honoree' : 'International Screen Honoree',
+                movies: ['Classic Feature', 'Acclaimed Drama', 'Box Office Hit', 'Signature Role'],
+                wiki: c.wiki,
+                photoUrl: thumbSrc,
+                bio:
+                  extract.length > 25
+                    ? extract.slice(0, 220) + (extract.length > 220 ? '...' : '')
+                    : `Celebrated ${c.industry} performer featured in the ${era} territory of Cinema Galaxy.`
+              });
+            })
+          );
+
+          if (newlyAdded.length > 0 && !cancelled) {
+            fullRoster.push(...newlyAdded);
+            setStars([...fullRoster]);
+            const starCounterEl = document.getElementById('star-counter');
+            const expansionEl = document.getElementById('expansion-progress');
+            if (starCounterEl) starCounterEl.textContent = fullRoster.length.toLocaleString();
+            if (expansionEl && fullRoster.length < TARGET_TOTAL) {
+              expansionEl.textContent = `(Loading 1000+ stars: ${fullRoster.length}/${TARGET_TOTAL}...)`;
+            } else if (expansionEl) {
+              expansionEl.textContent = '(1,002/1,002 Stars Loaded ✓)';
+            }
+          }
+        } catch {}
+      }
+    };
+<!-- ... existing code ... -->
